@@ -1,100 +1,154 @@
-# AI Investor Agent
+## AI Investor Agent
 
-A lightweight multi-agent stock analysis prototype built for hackathon-style workflows.
+Multi-agent stock and portfolio analysis system built with Python and FastAPI.
 
-The project analyzes a symbol with five focused agents:
+This project evaluates stocks using rule-based technical signals, portfolio context, and an explanation layer to produce practical actions like `Buy`, `Hold`, `Reduce`, `Avoid`, and `No Trade`.
 
-- `DataAgent`: fetches recent market price and volume data from Yahoo Finance
-- `SignalAgent`: computes trend, breakout, volume strength, and momentum
-- `PortfolioAgent`: evaluates sector concentration and overexposure risk
-- `DecisionAgent`: maps signals + portfolio context into `Buy` / `Hold` / `Reduce` / `Avoid`
-- `ExplanationAgent`: converts model outputs into plain-language reasoning
+## What It Does
 
-## Features
+- Analyzes stock trend, momentum, breakout behavior, and volume strength
+- Evaluates portfolio sector concentration and overexposure
+- Produces decision + confidence + confidence reason
+- Generates human-readable assistant explanation
+- Suggests next best action and alternatives
+- Applies safety guardrails when market data quality is weak
 
-- Live market data fetch using `yfinance`
-- Rule-based signal and decision logic
-- Portfolio-aware risk adjustment
-- Human-readable decision explanations
-- CLI support for one or many symbols
+## Architecture
+
+Agents are separated by responsibility:
+
+- `data_agent`: fetches market data (`yfinance`) and assigns `data_quality`
+- `signal_agent`: generates technical signals from market data
+- `decision_agent`: converts signals + portfolio context into action
+- `portfolio_agent`: computes sector exposure, risk notes, and diversification suggestions
+- `explanation_agent`: builds structured user-facing reasoning
+
+Orchestration layers:
+
+- `ai_investor_agent/workflow.py`: single-symbol workflow runner
+- `ai_investor_agent/api_service.py`: portfolio-level service for API responses
+- `api.py`: FastAPI app (`POST /analyze`)
+- `main.py`: local CLI entrypoint
+
+## Data Safety Guardrails
+
+The pipeline uses:
+
+- `data_quality = "valid" | "fallback" | "missing"`
+
+Safety behavior:
+
+- If `data_quality != "valid"`:
+- Decision is forced to `Hold` or `No Trade`
+- `Buy` and `Reduce` are blocked
+- Confidence is capped at `<= 0.3`
+- Explanation includes:
+  `Data is incomplete or fallback-based, so no strong decision is made.`
+
+This prevents confident decisions when data is invalid, incomplete, or fallback-based.
 
 ## Project Structure
 
 ```text
 ai-investor-agent/
-├── main.py
 ├── ai_investor_agent/
-│   ├── __init__.py
-│   ├── types.py
+│   ├── agents/
+│   │   ├── data_agent.py
+│   │   ├── signal_agent.py
+│   │   ├── decision_agent.py
+│   │   ├── portfolio_agent.py
+│   │   └── explanation_agent.py
+│   ├── api_service.py
 │   ├── workflow.py
-│   └── agents/
-│       ├── data_agent.py
-│       ├── signal_agent.py
-│       ├── portfolio_agent.py
-│       ├── decision_agent.py
-│       └── explanation_agent.py
+│   └── types.py
+├── api.py
+├── main.py
 └── README.md
 ```
 
-## Requirements
+## Quick Start
 
-- Python 3.10+
-- Internet connection (for Yahoo Finance data)
-
-Install dependencies:
+### 1) Create and activate virtual environment
 
 ```bash
-pip install yfinance
+python -m venv .venv
+source .venv/bin/activate
 ```
 
-## Run
-
-Analyze one symbol:
+### 2) Install dependencies
 
 ```bash
-python main.py --symbols AAPL
+pip install fastapi uvicorn yfinance
 ```
 
-Analyze multiple symbols:
+## Run CLI Demo
 
 ```bash
-python main.py --symbols AAPL,MSFT,NVDA
+python main.py --symbols AAPL,MSFT,RELIANCE.NS
 ```
 
-## Sample Output (abridged)
+This prints:
 
-```text
-=== Portfolio Context ===
-Sector Exposure: {'Technology': 70.0, 'Financials': 20.0, 'Energy': 10.0}
-Overexposure Flag: True
+- Decision and allocation hint
+- Confidence and reason
+- Portfolio context
+- Structured explanation sections
 
-=== Analysis For AAPL ===
-Trend Signal: downtrend
-Breakout: False
-Volume Strength: low
-Momentum: -1.93%
-Decision: Avoid
+## Run API
+
+```bash
+uvicorn api:app --reload --host 127.0.0.1 --port 8000
 ```
 
-## How the Decision Is Made
+Open docs at:
 
-The `DecisionAgent` creates a score from:
+- `http://127.0.0.1:8000/docs`
 
-- trend direction (`uptrend` / `neutral` / `downtrend`)
-- breakout status
-- momentum (capped so extreme values do not dominate)
-- volume strength
-- portfolio sector concentration penalty
+## API Contract
 
-Then it maps score ranges to actions:
+### Endpoint
 
-- high score -> `Buy`
-- mildly positive -> `Hold`
-- mildly negative -> `Reduce`
-- strongly negative -> `Avoid`
+- `POST /analyze`
+
+### Request Body
+
+```json
+[
+  { "symbol": "AAPL", "weight": 40 },
+  { "symbol": "MSFT", "weight": 30 },
+  { "symbol": "JPM", "weight": 30 }
+]
+```
+
+### Response Highlights
+
+For each stock result:
+
+- `stock_data.price`, `stock_data.price_history`, `stock_data.data_warning`
+- `signals.trend`, `signals.momentum_percent`, `signals.breakout`
+- `signals.data_quality`
+- `decision`, `confidence`, `confidence_reason`
+- `explanation`, `next_action`, `alternatives`
+
+Portfolio-level output:
+
+- `sector_exposure`
+- `overexposure`
+- `overexposed_sectors`
+- `diversification_suggestions`
+
+## Decision Tiering (Bearish Separation)
+
+The decision flow distinguishes bearish severity:
+
+- `Avoid`: strong confirmed bearish setup
+- `Reduce`: moderate weakness
+- `Hold`: neutral/mixed conditions
+
+This keeps risk actions explicit and avoids overlapping bearish rules.
 
 ## Notes
 
-- This is a rule-based prototype, not financial advice.
-- Always validate with additional indicators, risk controls, and position sizing rules.
-- Sector mappings are currently hardcoded in `ai_investor_agent/agents/portfolio_agent.py`.
+- This is a hackathon-style, rule-based prototype.
+- It is not investment advice.
+- Always validate with broader risk management, additional indicators, and live market checks.

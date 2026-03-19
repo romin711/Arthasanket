@@ -58,11 +58,15 @@ class MultiAgentStockAnalyzer:
         explanation = self.explanation_agent.explain(
             trend=str(signal.get("trend", "neutral")),
             breakout=bool(signal.get("breakout", False)),
-            volume_strength=str(signal.get("volume_strength", "low")),
+            volume_strength=str(signal.get("volume_strength", "normal")),
             momentum=float(signal.get("momentum_percent", 0.0)),
             decision=decision.action,
+            data_quality=str(signal.get("data_quality", "valid")),
+            next_action=decision.next_action,
+            alternatives=decision.alternatives,
             symbol=normalized_symbol,
             portfolio_context=portfolio_context,
+            volume_ratio=float(signal.get("volume_ratio", 1.0)),
         )
 
         return WorkflowResult(

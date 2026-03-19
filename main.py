@@ -44,7 +44,6 @@ def analyze_symbol(
     print(f"\n=== Analysis For {normalized_symbol} ===")
 
     live_data = data_agent.fetch_stock_data([normalized_symbol], portfolio=portfolio).get(normalized_symbol, {})
-    price = live_data.get("price")
     volume = live_data.get("volume")
     avg_volume = live_data.get("avg_volume")
     data_error = live_data.get("error")
@@ -67,35 +66,33 @@ def analyze_symbol(
         volume_strength=str(signal["volume_strength"]),
         momentum=float(signal["momentum_percent"]),
         decision=decision.action,
+        data_quality=str(signal.get("data_quality", "valid")),
+        next_action=decision.next_action,
+        alternatives=decision.alternatives,
         symbol=normalized_symbol,
         portfolio_context=portfolio_context,
+        volume_ratio=float(signal.get("volume_ratio", 1.0)),
     )
     symbol_sector = portfolio_agent.SECTOR_MAP.get(normalized_symbol, "Other")
     sector_exposure = float(portfolio_context.get("sector_exposure", {}).get(symbol_sector, 0.0))
     overexposure = bool(portfolio_context.get("overexposure", False))
 
-    if price is None:
-        print(f"Current Price: {market_data.latest_price:.2f} (fallback)")
-    else:
-        print(f"Current Price: {price:.2f}")
-
-    print(f"Current Volume: {volume if volume is not None else 'N/A'}")
-    print(f"5-Day Avg Volume: {avg_volume if avg_volume is not None else 'N/A'}")
     if data_error:
-        print(f"Data Warning: {data_error}")
+        print(f"Data Note: {data_error}")
 
-    print(f"Trend Signal: {signal['trend']}")
-    print(f"Breakout: {signal['breakout']}")
-    print(f"Volume Strength: {signal['volume_strength']}")
-    print(f"Momentum: {signal['momentum_percent']:.2f}%")
-    print(f"Decision: {decision.action}")
-    print(f"Decision Confidence: {decision.confidence_score:.2f}")
-    print(f"Allocation Hint: {decision.allocation_hint}")
-    print(f"Risk Note: {decision.risk_note}")
-    print(f"Portfolio Impact: {symbol_sector} exposure is {sector_exposure:.2f}%")
-    print(f"Portfolio Overexposed (>50% in one sector): {overexposure}")
-    print("Explanation:")
+    print("Decision")
+    print(f"- Action: {decision.action}")
+    print(f"- Allocation Hint: {decision.allocation_hint}")
+
+    print("Confidence + Reason")
+    print(f"- Confidence: {decision.confidence_score:.2f}")
+    print(f"- Reason: {decision.confidence_reason}")
+
+    print("----------------------------------")
+
+    print("Assistant View")
     print(explanation)
+    print(f"\nPortfolio Context: {symbol_sector} exposure {sector_exposure:.2f}% | Overexposed: {overexposure}")
 
 
 def main() -> None:

@@ -1,7 +1,5 @@
 """Signal agent: creates simple, meaningful trading signals."""
 
-from typing import Any
-
 from ai_investor_agent.types import MarketData
 
 
@@ -13,15 +11,32 @@ class SignalAgent:
         market_data: MarketData,
         current_volume: int | None = None,
         avg_volume: float | None = None,
-        portfolio_context: dict[str, Any] | None = None,
-    ) -> dict[str, str | bool | float]:
+        portfolio_context: dict[str, object] | None = None,
+    ) -> dict[str, str | bool | float | None]:
+        data_quality = str(getattr(market_data, "data_quality", "valid"))
+        data_warning = getattr(market_data, "data_warning", None)
+
+        if data_quality != "valid":
+            return {
+                "trend": "neutral",
+                "breakout": False,
+                "volume_strength": "normal",
+                "volume_ratio": 1.0,
+                "momentum_percent": 0.0,
+                "data_quality": data_quality,
+                "data_warning": str(data_warning) if data_warning else None,
+            }
+
         prices = market_data.closing_prices
         if len(prices) < 2:
             return {
                 "trend": "neutral",
                 "breakout": False,
-                "volume_strength": "low",
+                "volume_strength": "normal",
+                "volume_ratio": 1.0,
                 "momentum_percent": 0.0,
+                "data_quality": "fallback",
+                "data_warning": "Insufficient price points for robust signal generation.",
             }
 
         # Momentum: use the available window; prioritize last 5 days when possible.
@@ -45,17 +60,25 @@ class SignalAgent:
         five_day_high = max(lookback_prices) if lookback_prices else end_price
         breakout = end_price > five_day_high
 
-        # Volume strength: compare current volume to average volume.
+        # Volume strength: ratio-based classification for cleaner conviction signals.
         if current_volume is None or avg_volume is None or avg_volume <= 0:
-            volume_strength = "low"
-        elif current_volume >= avg_volume:
-            volume_strength = "high"
+            volume_ratio = 1.0
+            volume_strength = "normal"
         else:
-            volume_strength = "low"
+            volume_ratio = current_volume / avg_volume
+            if volume_ratio >= 1.20:
+                volume_strength = "high"
+            elif volume_ratio < 0.80:
+                volume_strength = "low"
+            else:
+                volume_strength = "normal"
 
         return {
             "trend": trend,
             "breakout": breakout,
             "volume_strength": volume_strength,
+            "volume_ratio": round(volume_ratio, 2),
             "momentum_percent": round(momentum_percent, 2),
+            "data_quality": "valid",
+            "data_warning": None,
         }

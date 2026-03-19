@@ -31,7 +31,12 @@ def fetch_stock_data(
 
     for raw_symbol in symbols:
         symbol = str(raw_symbol).strip().upper()
-        results[symbol] = {"price": None, "volume": None, "avg_volume": None}
+        results[symbol] = {
+            "price": None,
+            "volume": None,
+            "avg_volume": None,
+            "data_quality": "missing",
+        }
 
         if not symbol:
             results[symbol]["error"] = "Empty symbol provided."
@@ -54,6 +59,7 @@ def fetch_stock_data(
 
             if volume_series.empty:
                 results[symbol]["error"] = "Volume data is missing."
+                results[symbol]["data_quality"] = "fallback"
                 continue
 
             latest_price = float(close_series.iloc[-1])
@@ -64,6 +70,7 @@ def fetch_stock_data(
                 results[symbol]["error"] = "Not enough volume history to compute 5-day average."
                 results[symbol]["price"] = latest_price
                 results[symbol]["volume"] = latest_volume
+                results[symbol]["data_quality"] = "fallback"
                 continue
 
             avg_volume = float(recent_5_day_volume.mean())
@@ -71,6 +78,7 @@ def fetch_stock_data(
             results[symbol]["price"] = latest_price
             results[symbol]["volume"] = latest_volume
             results[symbol]["avg_volume"] = avg_volume
+            results[symbol]["data_quality"] = "valid"
 
         except Exception as exc:
             results[symbol]["error"] = f"Failed to fetch data: {exc}"
@@ -95,21 +103,67 @@ class DataAgent:
     ) -> MarketData:
         """Fetch a single symbol and map it to workflow-friendly MarketData."""
         normalized_symbol = str(symbol).strip().upper()
+        if not normalized_symbol:
+            prices = self._fallback_series("UNKNOWN")
+            return MarketData(
+                symbol="UNKNOWN",
+                closing_prices=prices,
+                latest_price=prices[-1],
+                data_quality="missing",
+                data_warning="Empty symbol provided; fallback price series used.",
+            )
 
         try:
             history = yf.Ticker(normalized_symbol).history(period="10d", interval="1d")
-            close_series = history["Close"].dropna() if not history.empty else None
-        except Exception:
-            close_series = None
-
-        if close_series is None or close_series.empty:
+        except Exception as exc:
             prices = self._fallback_series(normalized_symbol)
-        else:
-            prices = [float(price) for price in close_series.tail(7).tolist()]
-            if len(prices) < 7:
-                prices = self._pad_to_seven_days(prices)
+            return MarketData(
+                symbol=normalized_symbol,
+                closing_prices=prices,
+                latest_price=prices[-1],
+                data_quality="fallback",
+                data_warning=f"Price fetch failed; fallback price series used ({exc}).",
+            )
 
-        return MarketData(symbol=normalized_symbol, closing_prices=prices, latest_price=prices[-1])
+        if history.empty:
+            prices = self._fallback_series(normalized_symbol)
+            return MarketData(
+                symbol=normalized_symbol,
+                closing_prices=prices,
+                latest_price=prices[-1],
+                data_quality="missing",
+                data_warning="No market history found; symbol may be invalid or delisted.",
+            )
+
+        close_series = history["Close"].dropna()
+        if close_series.empty:
+            prices = self._fallback_series(normalized_symbol)
+            return MarketData(
+                symbol=normalized_symbol,
+                closing_prices=prices,
+                latest_price=prices[-1],
+                data_quality="missing",
+                data_warning="Close price history is missing; fallback price series used.",
+            )
+
+        prices = [float(price) for price in close_series.tail(7).tolist()]
+        if len(prices) < 7:
+            prices = self._pad_to_seven_days(prices)
+            return MarketData(
+                symbol=normalized_symbol,
+                closing_prices=prices,
+                latest_price=prices[-1],
+                data_quality="fallback",
+                data_warning="Insufficient close history; padded fallback values were used.",
+            )
+
+        return MarketData(
+            symbol=normalized_symbol,
+            closing_prices=prices,
+            latest_price=prices[-1],
+            data_quality="valid",
+            data_warning=None,
+        )
 
     @staticmethod
     def _pad_to_seven_days(prices: list[float]) -> list[float]:
