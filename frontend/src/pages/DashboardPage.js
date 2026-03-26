@@ -12,14 +12,19 @@ function toFiniteNumber(value) {
   return Number.isFinite(numeric) ? numeric : null;
 }
 
-function formatCurrency(value) {
+function getCurrencyForSymbol(symbol = '') {
+  return 'INR';
+}
+
+function formatCurrency(value, symbol = '') {
   const numeric = toFiniteNumber(value);
   if (numeric === null) {
     return '$0.00';
   }
+  const currency = getCurrencyForSymbol(symbol);
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: currency,
     maximumFractionDigits: 2,
   }).format(numeric);
 }
@@ -32,18 +37,18 @@ function formatSignedPercent(value) {
   return `${numeric >= 0 ? '+' : ''}${numeric.toFixed(2)}%`;
 }
 
-function formatSignedCurrency(value) {
+function formatSignedCurrency(value, symbol = '') {
   const numeric = toFiniteNumber(value);
   if (numeric === null) {
     return '$0.00';
   }
-  const amount = formatCurrency(Math.abs(numeric));
+  const amount = formatCurrency(Math.abs(numeric), symbol);
   return `${numeric >= 0 ? '+' : '-'}${amount}`;
 }
 
-function formatOptionalCurrency(value) {
+function formatOptionalCurrency(value, symbol = '') {
   const numeric = toFiniteNumber(value);
-  return numeric === null ? 'Not enough data' : formatCurrency(numeric);
+  return numeric === null ? 'Not enough data' : formatCurrency(numeric, symbol);
 }
 
 function formatOptionalNumber(value, digits = 2) {
@@ -231,7 +236,7 @@ function DashboardPage() {
     return {
       symbol: item.symbol,
       priceNumeric: latestPrice,
-      price: formatOptionalCurrency(latestPrice),
+      price: formatOptionalCurrency(latestPrice, item.symbol),
       changePercent,
       change: formatOptionalPercent(changePercent),
       trend: item.trend || item.signals?.trend || 'neutral',
@@ -323,11 +328,11 @@ function DashboardPage() {
     return {
       action: selectedTracked.decision,
       confidence: selectedTracked.confidence,
-      portfolioValue: formatOptionalCurrency(totalValue),
-      dailyPnl: pnl === null ? 'Not enough data' : formatSignedCurrency(pnl),
+      portfolioValue: formatOptionalCurrency(totalValue, selectedTracked.symbol),
+      dailyPnl: pnl === null ? 'Not enough data' : formatSignedCurrency(pnl, selectedTracked.symbol),
       dailyPnlPercent: pnlPercent === null ? 'Not enough data' : formatSignedPercent(pnlPercent),
-      investedCapital: formatOptionalCurrency(investedCapital),
-      cashReserve: formatOptionalCurrency(cashReserve),
+      investedCapital: formatOptionalCurrency(investedCapital, selectedTracked.symbol),
+      cashReserve: formatOptionalCurrency(cashReserve, selectedTracked.symbol),
     };
   }, [selectedTracked, trackedStocks]);
 
@@ -344,7 +349,7 @@ function DashboardPage() {
     return [
       {
         label: 'Price',
-        value: formatOptionalCurrency(selectedTracked.priceNumeric),
+        value: formatOptionalCurrency(selectedTracked.priceNumeric, selectedTracked.symbol),
         helper: selectedTracked.symbol,
         tone: 'neutral',
       },
@@ -362,7 +367,7 @@ function DashboardPage() {
       },
       {
         label: 'MA50',
-        value: formatOptionalCurrency(selectedTracked.ma50),
+        value: formatOptionalCurrency(selectedTracked.ma50, selectedTracked.symbol),
         helper: '50-day moving average',
         tone: selectedTracked.priceNumeric !== null && selectedTracked.ma50 !== null && selectedTracked.priceNumeric > selectedTracked.ma50
           ? 'success'

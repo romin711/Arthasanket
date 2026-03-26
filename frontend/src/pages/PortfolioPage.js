@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import { usePortfolio } from '../context/PortfolioContext';
 
+function getCurrencySymbol(symbol = '') {
+  return '₹';
+}
+
 function PortfolioPage() {
   const navigate = useNavigate();
   const {
@@ -278,11 +282,12 @@ function PortfolioPage() {
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
           {normalizedSymbols.length ? normalizedSymbols.map((symbol) => {
             const quote = realtimeQuotes[symbol];
+            const currencySymbol = getCurrencySymbol(symbol);
             return (
               <div key={symbol} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800">
                 <span className="font-semibold text-slate-900 dark:text-slate-100">{symbol}</span>
                 <span className="text-gray-500 dark:text-slate-400">
-                  {typeof quote?.price === 'number' ? `$${quote.price.toFixed(2)}` : 'No quote'}
+                  {typeof quote?.price === 'number' ? `${currencySymbol}${quote.price.toFixed(2)}` : 'No quote'}
                 </span>
               </div>
             );

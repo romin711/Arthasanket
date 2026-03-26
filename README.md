@@ -464,6 +464,60 @@ Example response:
 
 ---
 
+## ⚠️ Security Best Practices
+
+### Environment Variables
+
+**CRITICAL**: Never commit `.env` files to version control.
+
+Environment variables are already in `.gitignore`, but ensure:
+
+```bash
+# Verify .env is ignored
+git status | grep -i ".env"  # Should return nothing
+
+# If accidentally committed, remove from history:
+git rm --cached .env
+git rm --cached .env.example
+git commit --amend --no-edit
+git push --force-with-lease
+```
+
+### API Keys
+
+If you have committed API keys:
+
+1. **Rotate immediately** at the service provider (Gemini, etc.)
+2. Remove from Git history:
+   ```bash
+   git log --all --source -- .env
+   git log --all --source -- .env.example
+   ```
+3. Use `git filter-branch` or `BFG Repo-Cleaner` to scrub history
+
+### Recommended Security Hardening
+
+- [ ] **Environment Variables**: Use `.env.example` as template only
+- [ ] **Input Validation**: Sanitize all symbol inputs (alphanumeric + `.` only)
+- [ ] **Rate Limiting**: Add API endpoint rate limiting (5-10 req/min per IP)
+- [ ] **CORS**: Restrict frontend origin in production
+- [ ] **Authentication**: Add user login for multi-user scenarios
+- [ ] **Database**: Use encrypted connection strings in `.env`
+- [ ] **Secrets Manager**: Use AWS Secrets Manager / HashiCorp Vault in prod
+- [ ] **HTTPS**: Force HTTPS in production (redirect HTTP)
+- [ ] **Logging**: Never log API keys or sensitive data
+- [ ] **Dependency Audit**: Run `npm audit` regularly
+
+### Current Status
+
+- ⚠️ **Gemini API key may be exposed** if committed to repository
+  - Rotate the key at https://aistudio.google.com/
+  - Add to `.gitignore`
+- ✅ `.env` is already in `.gitignore`
+- ✅ No database credentials currently needed
+
+---
+
 ## Important Behaviors
 
 - Missing or invalid Yahoo OHLC values are removed before indicator calculation

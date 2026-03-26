@@ -56,7 +56,7 @@ function parseJsonRows(jsonText) {
     if (!symbol || Number.isNaN(weight)) {
       throw new Error(`JSON row ${index + 1} is invalid. Expected: { "symbol": "AAPL", "weight": 40 }`);
     }
-    return { symbol, weight: String(weight) };
+    return { symbol, weight };
   });
 }
 
