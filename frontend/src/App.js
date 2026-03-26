@@ -3,6 +3,7 @@ import { PortfolioProvider } from './context/PortfolioContext';
 import AppLayout from './layout/AppLayout';
 import DashboardPage from './pages/DashboardPage';
 import InsightsPage from './pages/InsightsPage';
+import OpportunityRadarPage from './pages/OpportunityRadarPage';
 import PortfolioPage from './pages/PortfolioPage';
 import SettingsPage from './pages/SettingsPage';
 
@@ -16,6 +17,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/portfolio" element={<PortfolioPage />} />
             <Route path="/insights" element={<InsightsPage />} />
+            <Route path="/opportunity-radar" element={<OpportunityRadarPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>

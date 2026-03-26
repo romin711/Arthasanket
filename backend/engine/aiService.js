@@ -6,12 +6,72 @@ function formatIndicatorValue(value, suffix = '') {
   return `${value.toFixed(2)}${suffix}`;
 }
 
+function isConfiguredGeminiKey(value) {
+  const key = String(value || '').trim();
+  if (!key) {
+    return false;
+  }
+
+  const lowered = key.toLowerCase();
+  const placeholderPatterns = [
+    'your_gemini_api_key_here',
+    'replace_me',
+    'changeme',
+    'example',
+  ];
+
+  return !placeholderPatterns.some((pattern) => lowered.includes(pattern));
+}
+
+function buildFallbackReasoning(signals, sector, sectorExposure, riskScore, decision) {
+  const trend = signals?.trend || 'neutral';
+  const rsi = Number.isFinite(signals?.rsi) ? Number(signals.rsi) : null;
+  const breakout = signals?.breakout === true ? 'yes' : (signals?.breakout === false ? 'no' : 'n/a');
+  const exposureText = Number.isFinite(sectorExposure)
+    ? `${sector} exposure ${sectorExposure.toFixed(1)}%`
+    : `${sector} exposure n/a`;
+
+  const reason = [
+    `Rule-based summary: trend ${trend}, RSI ${rsi === null ? 'n/a' : rsi.toFixed(2)}, breakout ${breakout}.`,
+    `Portfolio context: ${exposureText}, risk score ${Number.isFinite(riskScore) ? riskScore : 'n/a'}.`,
+  ].join(' ');
+
+  let nextAction = 'Monitor price action and re-evaluate on next daily candle.';
+  const normalizedDecision = String(decision || '').toUpperCase();
+  if (normalizedDecision.includes('BUY')) {
+    nextAction = 'Consider staged buying with a strict stop-loss near recent support.';
+  } else if (normalizedDecision.includes('SELL')) {
+    nextAction = 'Consider partial or full exit and wait for trend confirmation before re-entry.';
+  } else if (rsi !== null && rsi < 30) {
+    nextAction = 'Watch for reversal confirmation before adding exposure.';
+  }
+
+  return {
+    reason,
+    next_action: nextAction,
+  };
+}
+
+function parseAiJson(text) {
+  const cleaned = String(text || '')
+    .replace(/```json/gi, '')
+    .replace(/```/gi, '')
+    .trim();
+
+  try {
+    return JSON.parse(cleaned);
+  } catch (_error) {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) {
+      return JSON.parse(match[0]);
+    }
+    throw _error;
+  }
+}
+
 async function generateReasoning(signals, sector, sectorExposure, riskScore, finalScore, decision, geminiApiKey) {
-  if (!geminiApiKey) {
-    return {
-      reason: "Gemini API key not configured.",
-      next_action: "Evaluate manually based on signals."
-    };
+  if (!isConfiguredGeminiKey(geminiApiKey)) {
+    return buildFallbackReasoning(signals, sector, sectorExposure, riskScore, decision);
   }
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
@@ -53,9 +113,8 @@ async function generateReasoning(signals, sector, sectorExposure, riskScore, fin
     }
 
     const payload = await response.json();
-    let text = payload?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-    text = text.replace(/```json/gi, '').replace(/```/gi, '').trim();
-    const result = JSON.parse(text);
+    const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+    const result = parseAiJson(text);
 
     const reasonText = String(result.reason || 'Analysis complete.')
       .split(/\r?\n/)
@@ -69,10 +128,7 @@ async function generateReasoning(signals, sector, sectorExposure, riskScore, fin
       next_action: String(result.next_action || 'Follow standard procedure.').trim()
     };
   } catch (error) {
-    return {
-      reason: "AI reasoning failed to generate.",
-      next_action: "Review numerical scores manually."
-    };
+    return buildFallbackReasoning(signals, sector, sectorExposure, riskScore, decision);
   }
 }
 

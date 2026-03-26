@@ -406,6 +406,14 @@ POST /api/portfolio/analyze
 POST /api/agent/opportunity-radar
 ```
 
+### Opportunity radar history
+
+```text
+GET /api/agent/opportunity-radar/history?limit=25
+```
+
+Returns the latest persisted autonomous radar runs so UI can show daily signal history.
+
 This endpoint runs a fully autonomous 3-step workflow:
 
 1. detect signal from market + indicators
@@ -449,6 +457,27 @@ Example response shape:
       ]
     }
   ]
+}
+```
+
+Example history response shape:
+
+```json
+{
+  "items": [
+    {
+      "generatedAt": "2026-03-26T16:43:03.491Z",
+      "portfolioInsight": "Technology sector exposure is 53.33%",
+      "alerts": [
+        {
+          "symbol": "TCS",
+          "action": "HOLD",
+          "signalType": "oversold-reversal-watch"
+        }
+      ]
+    }
+  ],
+  "count": 1
 }
 ```
 

@@ -104,6 +104,7 @@ export function PortfolioProvider({ children }) {
   const [portfolioRows, setPortfolioRows] = useState([]);
   const [analysisData, setAnalysisData] = useState(null);
   const [opportunityRadarData, setOpportunityRadarData] = useState(null);
+  const [opportunityRadarHistory, setOpportunityRadarHistory] = useState([]);
   const [realtimeQuotes, setRealtimeQuotes] = useState({});
   const [lastQuoteTimestamp, setLastQuoteTimestamp] = useState('');
   const [apiError, setApiError] = useState('');
@@ -250,6 +251,7 @@ export function PortfolioProvider({ children }) {
       const data = await requestWithHostFallback('POST', '/api/agent/opportunity-radar', payload);
 
       setOpportunityRadarData(data || null);
+      setOpportunityRadarHistory((prev) => [data, ...prev].slice(0, 120));
       setStatusMessage(`Opportunity radar generated ${data?.alerts?.length || 0} actionable alerts.`);
       return data;
     } catch (error) {
@@ -261,6 +263,19 @@ export function PortfolioProvider({ children }) {
     }
   }, [analysisData, portfolioRows]);
 
+  const fetchOpportunityRadarHistory = useCallback(async (limit = 25) => {
+    try {
+      const data = await requestWithHostFallback('GET', `/api/agent/opportunity-radar/history?limit=${Number(limit) || 25}`);
+      const items = Array.isArray(data?.items) ? data.items : [];
+      setOpportunityRadarHistory(items);
+      return items;
+    } catch (error) {
+      const message = toMarketErrorMessage(error, 'Failed to fetch opportunity radar history.');
+      setApiError(message);
+      return [];
+    }
+  }, []);
+
   const value = useMemo(() => ({
     apiBaseUrl: API_BASE_URL,
     portfolioRows,
@@ -268,11 +283,13 @@ export function PortfolioProvider({ children }) {
     loadRowsFromJson,
     analysisData,
     opportunityRadarData,
+    opportunityRadarHistory,
     realtimeQuotes,
     lastQuoteTimestamp,
     refreshRealtimeQuotes,
     analyzePortfolio,
     runOpportunityRadar,
+    fetchOpportunityRadarHistory,
     apiError,
     statusMessage,
     isAnalyzing,
@@ -284,11 +301,13 @@ export function PortfolioProvider({ children }) {
     loadRowsFromJson,
     analysisData,
     opportunityRadarData,
+    opportunityRadarHistory,
     realtimeQuotes,
     lastQuoteTimestamp,
     refreshRealtimeQuotes,
     analyzePortfolio,
     runOpportunityRadar,
+    fetchOpportunityRadarHistory,
     apiError,
     statusMessage,
     isAnalyzing,

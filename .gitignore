@@ -37,6 +37,9 @@ htmlcov/
 # Logs
 *.log
 
+# Backend runtime data
+backend/storage/opportunity_radar_history.json
+
 # IDE/editor files
 .vscode/
 .idea/

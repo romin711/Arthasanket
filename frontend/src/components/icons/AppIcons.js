@@ -36,6 +36,17 @@ export function InsightsIcon() {
   );
 }
 
+export function RadarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={base} stroke="currentColor" strokeWidth="1.75">
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 12 17 7" />
+      <circle cx="17" cy="7" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function SettingsIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={base} stroke="currentColor" strokeWidth="1.75">

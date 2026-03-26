@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
 const { analyzeSingleSymbol, analyzePortfolio, normalizePortfolioRows } = require('./engine/pipeline');
-const { runOpportunityRadar } = require('./engine/opportunityAgent');
+const { runOpportunityRadar, getOpportunityRadarHistory } = require('./engine/opportunityAgent');
 
 function loadEnvFile(fileName) {
   const envPath = path.join(__dirname, fileName);
@@ -174,6 +174,16 @@ const server = http.createServer(async (req, res) => {
         geminiApiKey: GEMINI_API_KEY,
       });
       sendJson(res, 200, result);
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/agent/opportunity-radar/history') {
+      const limit = Number(url.searchParams.get('limit') || 25);
+      const items = getOpportunityRadarHistory(limit);
+      sendJson(res, 200, {
+        items,
+        count: items.length,
+      });
       return;
     }
 

@@ -7,6 +7,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 const routeLabelMap = {
   '/dashboard': 'Decision Engine',
   '/portfolio': 'Portfolio Workspace',
+  '/opportunity-radar': 'Opportunity Radar',
   '/insights': 'Market Insights',
   '/settings': 'Workspace Settings',
 };

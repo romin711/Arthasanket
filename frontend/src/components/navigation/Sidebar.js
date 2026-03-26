@@ -4,12 +4,14 @@ import {
   DashboardIcon,
   InsightsIcon,
   PortfolioIcon,
+  RadarIcon,
   SettingsIcon,
 } from '../icons/AppIcons';
 
 export const navItems = [
   { to: '/dashboard', label: 'Dashboard', Icon: DashboardIcon },
   { to: '/portfolio', label: 'Portfolio', Icon: PortfolioIcon },
+  { to: '/opportunity-radar', label: 'Opportunity Radar', Icon: RadarIcon },
   { to: '/insights', label: 'Insights', Icon: InsightsIcon },
   { to: '/settings', label: 'Settings', Icon: SettingsIcon },
 ];

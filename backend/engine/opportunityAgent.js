@@ -1,4 +1,9 @@
 const { analyzePortfolio, normalizePortfolioRows } = require('./pipeline');
+const fs = require('fs');
+const path = require('path');
+
+const HISTORY_FILE_PATH = path.join(__dirname, '..', 'storage', 'opportunity_radar_history.json');
+const MAX_HISTORY_ITEMS = 120;
 
 function toFiniteNumber(value) {
   const numeric = Number(value);
@@ -149,6 +154,51 @@ function buildActionableAlert(enrichedSignal, symbolResult) {
   };
 }
 
+function ensureHistoryDir() {
+  const historyDir = path.dirname(HISTORY_FILE_PATH);
+  if (!fs.existsSync(historyDir)) {
+    fs.mkdirSync(historyDir, { recursive: true });
+  }
+}
+
+function readHistoryFile() {
+  ensureHistoryDir();
+
+  if (!fs.existsSync(HISTORY_FILE_PATH)) {
+    return [];
+  }
+
+  try {
+    const raw = fs.readFileSync(HISTORY_FILE_PATH, 'utf8').trim();
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+function writeHistoryFile(historyItems) {
+  ensureHistoryDir();
+  const sanitized = Array.isArray(historyItems) ? historyItems : [];
+  fs.writeFileSync(HISTORY_FILE_PATH, JSON.stringify(sanitized, null, 2));
+}
+
+function saveOpportunityRadarRun(runPayload) {
+  const existing = readHistoryFile();
+  const next = [runPayload, ...existing].slice(0, MAX_HISTORY_ITEMS);
+  writeHistoryFile(next);
+  return next;
+}
+
+function getOpportunityRadarHistory(limit = 25) {
+  const safeLimit = Math.max(1, Math.min(200, Number(limit) || 25));
+  return readHistoryFile().slice(0, safeLimit);
+}
+
 async function runOpportunityRadar(inputRows, options = {}) {
   const normalizedRows = normalizePortfolioRows(inputRows);
 
@@ -168,7 +218,7 @@ async function runOpportunityRadar(inputRows, options = {}) {
     return buildActionableAlert(signal, symbolResult || {});
   });
 
-  return {
+  const payload = {
     workflow: [
       'detect_signal',
       'enrich_with_portfolio_context',
@@ -177,10 +227,15 @@ async function runOpportunityRadar(inputRows, options = {}) {
     autonomous: true,
     portfolioInsight: portfolioAnalysis.portfolioInsight,
     generatedAt: new Date().toISOString(),
+    portfolioRows: normalizedRows,
     alerts,
   };
+
+  saveOpportunityRadarRun(payload);
+  return payload;
 }
 
 module.exports = {
   runOpportunityRadar,
+  getOpportunityRadarHistory,
 };
