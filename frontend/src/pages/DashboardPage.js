@@ -78,17 +78,40 @@ function normalizeHistoricalSeries(item) {
   if (Array.isArray(item?.historical) && item.historical.length) {
     return item.historical
       .map((point) => {
+        const open = toFiniteNumber(point?.open);
+        const high = toFiniteNumber(point?.high);
+        const low = toFiniteNumber(point?.low);
         const close = toFiniteNumber(point?.close);
-        if (close === null) {
+        const volume = toFiniteNumber(point?.volume);
+        const date = String(point?.date || '').slice(0, 10);
+
+        if (!date || close === null) {
           return null;
         }
 
         return {
-          date: point?.date || '',
+          date,
+          open,
+          high,
+          low,
           close,
+          volume,
         };
       })
-      .filter(Boolean);
+      .filter((point) => {
+        if (!point) {
+          return false;
+        }
+
+        // Candlestick rendering requires all OHLC fields.
+        return (
+          point.open !== null
+          && point.high !== null
+          && point.low !== null
+          && point.close !== null
+        );
+      })
+      .sort((left, right) => left.date.localeCompare(right.date));
   }
 
   if (Array.isArray(item?.stock_data?.price_history) && item.stock_data.price_history.length) {
@@ -102,12 +125,23 @@ function normalizeHistoricalSeries(item) {
         const dayOffset = points.length - index - 1;
         const date = new Date();
         date.setDate(date.getDate() - dayOffset);
+
+        const previousClose = index > 0
+          ? toFiniteNumber(points[index - 1])
+          : numericClose;
+        const open = previousClose ?? numericClose;
+
         return {
-          date: date.toISOString().slice(5, 10),
+          date: date.toISOString().slice(0, 10),
+          open,
+          high: Math.max(open, numericClose),
+          low: Math.min(open, numericClose),
           close: numericClose,
+          volume: null,
         };
       })
-      .filter(Boolean);
+      .filter(Boolean)
+      .sort((left, right) => left.date.localeCompare(right.date));
   }
 
   return [];
@@ -206,6 +240,8 @@ function DashboardPage() {
       ma50: toFiniteNumber(item.ma50 ?? item.signals?.ma50),
       decision: toAction(item.decision),
       confidence: normalizeConfidence(item.confidence),
+      breakout: item.breakout ?? item.signals?.breakout ?? null,
+      finalScore: toFiniteNumber(item.final_score ?? item.finalScore),
       weight: Number(weightsBySymbol[item.symbol] || item.weight || 0),
       historical,
       signals: buildSignalList(item),
@@ -226,10 +262,24 @@ function DashboardPage() {
     if (!selectedTracked) {
       return [];
     }
-    return selectedTracked.historical.map((point) => ({
-      time: String(point.date || '').slice(-5) || 'N/A',
-      price: toFiniteNumber(point.close),
-    })).filter((point) => point.price !== null);
+
+    return selectedTracked.historical
+      .map((point) => ({
+        time: String(point.date || '').slice(0, 10),
+        open: toFiniteNumber(point.open),
+        high: toFiniteNumber(point.high),
+        low: toFiniteNumber(point.low),
+        close: toFiniteNumber(point.close),
+        volume: toFiniteNumber(point.volume),
+      }))
+      .filter((point) => (
+        point.time
+        && point.open !== null
+        && point.high !== null
+        && point.low !== null
+        && point.close !== null
+      ))
+      .sort((left, right) => left.time.localeCompare(right.time));
   }, [selectedTracked]);
 
   const hero = useMemo(() => {
@@ -453,6 +503,13 @@ function DashboardPage() {
             title={selectedTracked ? `${selectedTracked.symbol} Daily Prices (60D)` : 'Daily Prices'}
             subtitle="Fetched from live market API and updated with refresh"
             data={chartSeries}
+            meta={selectedTracked ? {
+              symbol: selectedTracked.symbol,
+              decision: selectedTracked.decision,
+              confidence: selectedTracked.confidence,
+              breakout: selectedTracked.breakout,
+              finalScore: selectedTracked.finalScore,
+            } : null}
           />
 
           <div>

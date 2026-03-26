@@ -7,7 +7,7 @@
 ![Node.js](https://img.shields.io/badge/Node.js-Backend-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React-Frontend-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![Yahoo Finance](https://img.shields.io/badge/Yahoo-Market%20Data-6001D2?style=for-the-badge&logo=yahoo&logoColor=white)
-![Recharts](https://img.shields.io/badge/Recharts-Charting-0F172A?style=for-the-badge)
+![Lightweight Charts](https://img.shields.io/badge/TradingView-Lightweight--Charts-0F172A?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Prototype-F59E0B?style=for-the-badge)
 
 </div>
@@ -142,10 +142,10 @@ For each resolved symbol, the backend requests chart data from Yahoo Finance.
 
 Then it cleans the data before calculations:
 
-- removes `null`, `NaN`, and invalid close values
+- removes `null`, `NaN`, and invalid OHLC values
 - keeps valid historical points only
 - sorts data oldest to latest
-- keeps price history for charting and indicators
+- keeps OHLC price history for candlestick charting and indicators
 
 This matters because technical indicators depend on time order and valid numeric values.
 
@@ -283,7 +283,7 @@ dashboard rendering
 - React
 - React Router
 - Axios
-- Recharts
+- TradingView `lightweight-charts`
 - Tailwind-based styling
 
 ---
@@ -426,8 +426,20 @@ Example response:
       "resolvedSymbol": "RELIANCE.NS",
       "price": 2941.35,
       "historical": [
-        { "date": "2026-03-19", "close": 2880.4 },
-        { "date": "2026-03-20", "close": 2892.6 }
+        {
+          "date": "2026-03-19",
+          "open": 2868.2,
+          "high": 2890.95,
+          "low": 2859.6,
+          "close": 2880.4
+        },
+        {
+          "date": "2026-03-20",
+          "open": 2880.4,
+          "high": 2901.4,
+          "low": 2873.1,
+          "close": 2892.6
+        }
       ],
       "trend": "neutral",
       "rsi": 52.61,
@@ -454,11 +466,13 @@ Example response:
 
 ## Important Behaviors
 
-- Missing or invalid Yahoo values are removed before indicator calculation
+- Missing or invalid Yahoo OHLC values are removed before indicator calculation
 - Historical data is processed oldest to latest
 - Indicators return `null` if history is insufficient
 - The backend does not use default `0` values for missing indicators
 - Missing key indicators trigger a safe `HOLD` decision
+- The frontend renders a TradingView-style candlestick chart with MA20/MA50 overlays
+- The frontend shows `Not enough data for chart` if there are not enough valid OHLC points
 - The frontend shows `Not enough data` for missing metrics
 - Insufficient-data cases are logged in the backend for debugging
 

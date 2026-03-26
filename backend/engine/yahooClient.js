@@ -28,19 +28,38 @@ function parseYahooChart(payload, symbol) {
   }
 
   const timestamps = result.timestamp || [];
-  const closes = result?.indicators?.quote?.[0]?.close || [];
+  const quotes = result?.indicators?.quote?.[0] || {};
+  const opens = quotes.open || [];
+  const highs = quotes.high || [];
+  const lows = quotes.low || [];
+  const closes = quotes.close || [];
+  const volumes = quotes.volume || [];
   const historical = timestamps
     .map((timestamp, index) => {
       const unixSeconds = toFiniteNumber(timestamp);
+      const open = toFiniteNumber(opens[index]);
+      const high = toFiniteNumber(highs[index]);
+      const low = toFiniteNumber(lows[index]);
       const close = toFiniteNumber(closes[index]);
-      if (unixSeconds === null || close === null) {
+      const volume = toFiniteNumber(volumes[index]);
+      if (
+        unixSeconds === null
+        || open === null
+        || high === null
+        || low === null
+        || close === null
+      ) {
         return null;
       }
 
       return {
         timestamp: unixSeconds,
         date: toDateString(unixSeconds),
+        open,
+        high,
+        low,
         close,
+        volume,
       };
     })
     .filter(Boolean)
