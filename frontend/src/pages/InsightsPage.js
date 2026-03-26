@@ -16,8 +16,9 @@ function normalizeConfidence(confidenceValue) {
 }
 
 function InsightsPage() {
-  const { analysisData } = usePortfolio();
+  const { analysisData, opportunityRadarData, isRunningOpportunityRadar } = usePortfolio();
   const results = analysisData?.results || [];
+  const radarAlerts = opportunityRadarData?.alerts || [];
 
   const highlights = results.map((item) => {
     const decision = String(item?.decision || 'HOLD').toUpperCase();
@@ -31,6 +32,50 @@ function InsightsPage() {
 
   return (
     <div className="space-y-6">
+      <Card className="p-6" interactive={false}>
+        <h2 className="text-lg font-semibold">Opportunity Radar Alerts</h2>
+        <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
+          Autonomous 3-step workflow: detect signal, enrich with portfolio context, generate actionable alert.
+        </p>
+
+        {opportunityRadarData?.workflow?.length ? (
+          <p className="mt-3 text-xs text-gray-500 dark:text-slate-400">
+            Workflow: {opportunityRadarData.workflow.join(' -> ')}
+          </p>
+        ) : null}
+
+        <div className="mt-6 space-y-3">
+          {radarAlerts.length ? radarAlerts.map((alert) => (
+            <div key={`${alert.symbol}-${alert.signalType}`} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-800">
+              <p className="font-semibold text-slate-900 dark:text-slate-100">
+                {alert.symbol}: {alert.action} ({alert.signalType})
+              </p>
+              <p className="mt-1 text-gray-600 dark:text-slate-300">{alert.explanation}</p>
+              <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
+                Strength: {alert.signalStrength ?? 'NA'} | Confidence: {alert.confidence ?? 'NA'}%
+                {' '}| Backtested success: {alert.backtestedSuccessRate ?? 'Not enough data'}
+              </p>
+              {Array.isArray(alert.riskFlags) && alert.riskFlags.length ? (
+                <p className="mt-1 text-xs text-amber-600 dark:text-amber-300">
+                  Risk flags: {alert.riskFlags.join(', ')}
+                </p>
+              ) : null}
+              {Array.isArray(alert.sources) && alert.sources.length ? (
+                <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+                  Sources: {alert.sources.join(' | ')}
+                </p>
+              ) : null}
+            </div>
+          )) : (
+            <p className="text-sm text-gray-500 dark:text-slate-400">
+              {isRunningOpportunityRadar
+                ? 'Running opportunity radar...'
+                : 'No opportunity alerts yet. Click Run AI Scan to generate autonomous alerts.'}
+            </p>
+          )}
+        </div>
+      </Card>
+
       <Card className="p-6" interactive={false}>
         <h2 className="text-lg font-semibold">Market Intelligence Brief</h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">

@@ -400,6 +400,58 @@ GET /api/stock/RELIANCE
 POST /api/portfolio/analyze
 ```
 
+### Autonomous opportunity radar (3-step agent)
+
+```text
+POST /api/agent/opportunity-radar
+```
+
+This endpoint runs a fully autonomous 3-step workflow:
+
+1. detect signal from market + indicators
+2. enrich each signal with portfolio context
+3. generate actionable alert with explainability + sources
+
+Example request:
+
+```json
+[
+  { "symbol": "TCS", "weight": 40 },
+  { "symbol": "RELIANCE", "weight": 35 }
+]
+```
+
+Example response shape:
+
+```json
+{
+  "workflow": [
+    "detect_signal",
+    "enrich_with_portfolio_context",
+    "generate_actionable_alert"
+  ],
+  "autonomous": true,
+  "portfolioInsight": "Technology sector exposure is 53.33%",
+  "generatedAt": "2026-03-26T16:29:35.956Z",
+  "alerts": [
+    {
+      "symbol": "TCS",
+      "action": "HOLD",
+      "signalType": "oversold-reversal-watch",
+      "signalStrength": 30,
+      "backtestedSuccessRate": null,
+      "explanation": "...",
+      "riskFlags": ["high-sector-concentration", "oversold"],
+      "sources": [
+        "Yahoo Finance chart API",
+        "In-house indicator pipeline (MA/RSI/momentum)",
+        "Portfolio exposure engine"
+      ]
+    }
+  ]
+}
+```
+
 Example request:
 
 ```json

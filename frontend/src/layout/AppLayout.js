@@ -14,7 +14,13 @@ const routeLabelMap = {
 function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { analyzePortfolio, isAnalyzing, statusMessage } = usePortfolio();
+  const {
+    analyzePortfolio,
+    runOpportunityRadar,
+    isAnalyzing,
+    isRunningOpportunityRadar,
+    statusMessage,
+  } = usePortfolio();
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -45,10 +51,15 @@ function AppLayout() {
 
   const handleRunScan = async () => {
     try {
-      await analyzePortfolio();
-      navigate('/dashboard');
+      await runOpportunityRadar();
+      navigate('/insights');
     } catch (_error) {
-      navigate('/portfolio');
+      try {
+        await analyzePortfolio();
+        navigate('/dashboard');
+      } catch (_innerError) {
+        navigate('/portfolio');
+      }
     }
   };
 
@@ -79,11 +90,11 @@ function AppLayout() {
                 <button
                   type="button"
                   onClick={handleRunScan}
-                  disabled={isAnalyzing}
+                  disabled={isAnalyzing || isRunningOpportunityRadar}
                   className="ripple-btn inline-flex items-center gap-2 rounded-xl bg-[#4F46E5] px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   <SparkIcon />
-                  {isAnalyzing ? 'Running Scan...' : 'Run AI Scan'}
+                  {isAnalyzing || isRunningOpportunityRadar ? 'Running Scan...' : 'Run AI Scan'}
                 </button>
               </div>
             </div>

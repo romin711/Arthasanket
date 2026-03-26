@@ -103,12 +103,14 @@ function rowsFromResults(results) {
 export function PortfolioProvider({ children }) {
   const [portfolioRows, setPortfolioRows] = useState([]);
   const [analysisData, setAnalysisData] = useState(null);
+  const [opportunityRadarData, setOpportunityRadarData] = useState(null);
   const [realtimeQuotes, setRealtimeQuotes] = useState({});
   const [lastQuoteTimestamp, setLastQuoteTimestamp] = useState('');
   const [apiError, setApiError] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isRefreshingQuotes, setIsRefreshingQuotes] = useState(false);
+  const [isRunningOpportunityRadar, setIsRunningOpportunityRadar] = useState(false);
 
   const setRowsFromManual = useCallback((rows) => {
     setPortfolioRows(rows);
@@ -227,33 +229,71 @@ export function PortfolioProvider({ children }) {
     }
   }, [analysisData, portfolioRows]);
 
+  const runOpportunityRadar = useCallback(async (rowsOverride = null) => {
+    setIsRunningOpportunityRadar(true);
+    setApiError('');
+
+    try {
+      let rows = [];
+
+      if (rowsOverride && rowsOverride.length) {
+        rows = normalizeRows(rowsOverride);
+      } else if (portfolioRows.length) {
+        rows = normalizeRows(portfolioRows);
+      } else if (analysisData?.results?.length) {
+        rows = normalizeRows(rowsFromResults(analysisData.results));
+      } else {
+        throw new Error('Please add at least one valid symbol and weight before running AI scan.');
+      }
+
+      const payload = rows.map((row) => ({ symbol: row.symbol, weight: row.weight }));
+      const data = await requestWithHostFallback('POST', '/api/agent/opportunity-radar', payload);
+
+      setOpportunityRadarData(data || null);
+      setStatusMessage(`Opportunity radar generated ${data?.alerts?.length || 0} actionable alerts.`);
+      return data;
+    } catch (error) {
+      const message = toMarketErrorMessage(error, 'Failed to run opportunity radar.');
+      setApiError(message);
+      throw error;
+    } finally {
+      setIsRunningOpportunityRadar(false);
+    }
+  }, [analysisData, portfolioRows]);
+
   const value = useMemo(() => ({
     apiBaseUrl: API_BASE_URL,
     portfolioRows,
     setRowsFromManual,
     loadRowsFromJson,
     analysisData,
+    opportunityRadarData,
     realtimeQuotes,
     lastQuoteTimestamp,
     refreshRealtimeQuotes,
     analyzePortfolio,
+    runOpportunityRadar,
     apiError,
     statusMessage,
     isAnalyzing,
     isRefreshingQuotes,
+    isRunningOpportunityRadar,
   }), [
     portfolioRows,
     setRowsFromManual,
     loadRowsFromJson,
     analysisData,
+    opportunityRadarData,
     realtimeQuotes,
     lastQuoteTimestamp,
     refreshRealtimeQuotes,
     analyzePortfolio,
+    runOpportunityRadar,
     apiError,
     statusMessage,
     isAnalyzing,
     isRefreshingQuotes,
+    isRunningOpportunityRadar,
   ]);
 
   return (

@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
 const { analyzeSingleSymbol, analyzePortfolio, normalizePortfolioRows } = require('./engine/pipeline');
+const { runOpportunityRadar } = require('./engine/opportunityAgent');
 
 function loadEnvFile(fileName) {
   const envPath = path.join(__dirname, fileName);
@@ -160,6 +161,16 @@ const server = http.createServer(async (req, res) => {
       const payload = await readJsonBody(req);
       const rows = normalizePortfolioRows(rowsFromPayload(payload));
       const result = await analyzePortfolio(rows, {
+        geminiApiKey: GEMINI_API_KEY,
+      });
+      sendJson(res, 200, result);
+      return;
+    }
+
+    if (req.method === 'POST' && pathname === '/api/agent/opportunity-radar') {
+      const payload = await readJsonBody(req);
+      const rows = normalizePortfolioRows(rowsFromPayload(payload));
+      const result = await runOpportunityRadar(rows, {
         geminiApiKey: GEMINI_API_KEY,
       });
       sendJson(res, 200, result);
