@@ -1,6 +1,7 @@
 const { analyzePortfolio, normalizePortfolioRows } = require('./pipeline');
 const fs = require('fs');
 const path = require('path');
+const { getMarketContextForSymbol } = require('./marketContextService');
 
 const HISTORY_FILE_PATH = path.join(__dirname, '..', 'storage', 'opportunity_radar_history.json');
 const MAX_HISTORY_ITEMS = 120;
@@ -102,6 +103,7 @@ function enrichWithPortfolioContext(signal, portfolioAnalysis) {
   const sectorAllocation = portfolioAnalysis?.sectorAllocation || {};
   const symbolResult = (portfolioAnalysis?.results || []).find((item) => item.symbol === signal.symbol);
   const symbolSectorExposure = toFiniteNumber(symbolResult?.sector_exposure) || 0;
+  const marketContext = getMarketContextForSymbol(symbolResult?.resolvedSymbol || signal.resolvedSymbol);
 
   return {
     ...signal,
@@ -109,6 +111,7 @@ function enrichWithPortfolioContext(signal, portfolioAnalysis) {
     overexposedSectors,
     portfolioInsight: portfolioAnalysis?.portfolioInsight || 'Portfolio context unavailable.',
     sectorAllocation,
+    marketContext,
   };
 }
 
@@ -132,6 +135,22 @@ function buildActionableAlert(enrichedSignal, symbolResult) {
     `Portfolio sector exposure for this symbol is ${enrichedSignal.sectorExposurePercent.toFixed(1)}%.`,
   ];
 
+  const exposurePenalty = Math.min(30, Math.max(0, Math.round((enrichedSignal.sectorExposurePercent - 25) * 1.2)));
+  const breakoutBonus = backtestBreakoutRate === null ? 0 : Math.round(backtestBreakoutRate / 8);
+  const confidenceScore = confidence === null ? 0 : confidence;
+  const contextScore = toFiniteNumber(enrichedSignal?.marketContext?.contextScore) || 0;
+  const priorityScore = Math.max(
+    0,
+    Math.min(100, enrichedSignal.signalStrength + confidenceScore + breakoutBonus + contextScore - exposurePenalty)
+  );
+
+  const portfolioRelevance =
+    enrichedSignal.sectorExposurePercent >= 40
+      ? 'High concentration risk: treat any new exposure carefully.'
+      : enrichedSignal.sectorExposurePercent >= 25
+        ? 'Moderate concentration: use staged entries and tight risk controls.'
+        : 'Low concentration: portfolio has room for measured exposure.';
+
   return {
     symbol: enrichedSignal.symbol,
     resolvedSymbol: enrichedSignal.resolvedSymbol,
@@ -139,7 +158,10 @@ function buildActionableAlert(enrichedSignal, symbolResult) {
     confidence: confidence === null ? null : Math.round(confidence),
     signalType: enrichedSignal.signalType,
     signalStrength: enrichedSignal.signalStrength,
+    priorityScore,
     backtestedSuccessRate: backtestBreakoutRate,
+    portfolioRelevance,
+    contextSignals: Array.isArray(enrichedSignal?.marketContext?.events) ? enrichedSignal.marketContext.events : [],
     explanation: explanationParts.join(' '),
     riskFlags: [
       enrichedSignal.sectorExposurePercent >= 35 ? 'high-sector-concentration' : null,
@@ -150,6 +172,7 @@ function buildActionableAlert(enrichedSignal, symbolResult) {
       'Yahoo Finance chart API',
       'In-house indicator pipeline (MA/RSI/momentum)',
       'Portfolio exposure engine',
+      'Market context events (filings/results/deals)',
     ],
   };
 }

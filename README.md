@@ -447,7 +447,23 @@ Example response shape:
       "action": "HOLD",
       "signalType": "oversold-reversal-watch",
       "signalStrength": 30,
+      "priorityScore": 34,
       "backtestedSuccessRate": null,
+      "portfolioRelevance": "Moderate concentration: use staged entries and tight risk controls.",
+      "contextSignals": [
+        {
+          "type": "quarterly_result",
+          "impact": "positive",
+          "title": "Q3 revenue beat street estimates",
+          "source": "ET Markets",
+          "sourceUrl": "https://economictimes.indiatimes.com/markets",
+          "credibilityTier": "news",
+          "credibilityScore": 2,
+          "ageDays": 2,
+          "recencyWeight": 1,
+          "weightedImpactScore": 6
+        }
+      ],
       "explanation": "...",
       "riskFlags": ["high-sector-concentration", "oversold"],
       "sources": [

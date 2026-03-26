@@ -1,0 +1,48 @@
+{
+  "TCS.NS": [
+    {
+      "type": "quarterly_result",
+      "impact": "positive",
+      "title": "Q3 revenue beat street estimates",
+      "source": "ET Markets",
+      "sourceUrl": "https://economictimes.indiatimes.com/markets",
+      "date": "2026-03-20"
+    },
+    {
+      "type": "management_commentary",
+      "impact": "neutral",
+      "title": "Management guides stable demand in BFSI vertical",
+      "source": "Company Earnings Call",
+      "sourceUrl": "https://www.tcs.com/investor-relations",
+      "date": "2026-03-18"
+    }
+  ],
+  "RELIANCE.NS": [
+    {
+      "type": "regulatory_update",
+      "impact": "neutral",
+      "title": "New compliance disclosure published",
+      "source": "BSE Filings",
+      "sourceUrl": "https://www.bseindia.com/corporates",
+      "date": "2026-03-19"
+    },
+    {
+      "type": "bulk_deal",
+      "impact": "negative",
+      "title": "Large institutional sell-side block reported",
+      "source": "NSE Bulk Deals",
+      "sourceUrl": "https://www.nseindia.com/report-detail/display-bulk-and-block-deals",
+      "date": "2026-03-17"
+    }
+  ],
+  "INFY.NS": [
+    {
+      "type": "insider_trade",
+      "impact": "positive",
+      "title": "Promoter-linked entity added exposure",
+      "source": "SEBI Disclosures",
+      "sourceUrl": "https://www.sebi.gov.in/sebiweb/home/HomeAction.do?doListing=yes&sid=3&ssid=12&smid=0",
+      "date": "2026-03-15"
+    }
+  ]
+}
