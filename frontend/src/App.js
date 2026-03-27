@@ -1,11 +1,13 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { PortfolioProvider } from './context/PortfolioContext';
 import AppLayout from './layout/AppLayout';
+import ChartsPage from './pages/ChartsPage';
 import DashboardPage from './pages/DashboardPage';
 import InsightsPage from './pages/InsightsPage';
 import OpportunityRadarPage from './pages/OpportunityRadarPage';
 import PortfolioPage from './pages/PortfolioPage';
 import SettingsPage from './pages/SettingsPage';
+import ValidationDashboard from './pages/ValidationDashboard';
 
 function App() {
   return (
@@ -16,8 +18,10 @@ function App() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/charts" element={<ChartsPage />} />
             <Route path="/insights" element={<InsightsPage />} />
             <Route path="/opportunity-radar" element={<OpportunityRadarPage />} />
+            <Route path="/validation-dashboard" element={<ValidationDashboard />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>

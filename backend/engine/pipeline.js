@@ -64,8 +64,13 @@ function computeVolatilityPercent(closes) {
     return null;
   }
 
-  const current = closes[closes.length - 1];
-  const previous = closes[closes.length - 2];
+  const valid = closes.filter((value) => Number.isFinite(value) && value > 0);
+  if (valid.length < 2) {
+    return null;
+  }
+
+  const current = valid[valid.length - 1];
+  const previous = valid[valid.length - 2];
   if (previous === 0) {
     return null;
   }
@@ -83,7 +88,19 @@ function detectBreakout(price, closes) {
   return price > high20;
 }
 
+const INSUFFICIENT_DATA_LOG_TTL_MS = 5 * 60 * 1000;
+const insufficientDataLogTimestamps = new Map();
+
 function logInsufficientData(symbol, details) {
+  const cacheKey = `${symbol}|${details}`;
+  const now = Date.now();
+  const lastLoggedAt = insufficientDataLogTimestamps.get(cacheKey) || 0;
+
+  if (now - lastLoggedAt < INSUFFICIENT_DATA_LOG_TTL_MS) {
+    return;
+  }
+
+  insufficientDataLogTimestamps.set(cacheKey, now);
   // eslint-disable-next-line no-console
   console.warn(`[pipeline] Insufficient data for ${symbol}: ${details}`);
 }

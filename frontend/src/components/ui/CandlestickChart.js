@@ -167,80 +167,6 @@ function buildVolumeSeries(candles) {
   });
 }
 
-function buildBreakoutMarkers(candles, lookback = 20) {
-  const markers = [];
-
-  for (let index = lookback; index < candles.length; index += 1) {
-    const previousWindow = candles.slice(index - lookback, index);
-    const previousHigh = Math.max(...previousWindow.map((candle) => candle.high));
-
-    if (candles[index].close <= previousHigh) {
-      continue;
-    }
-
-    const previousClose = candles[index - 1]?.close ?? null;
-    if (previousClose !== null && previousClose > previousHigh) {
-      continue;
-    }
-
-    markers.push({
-      time: candles[index].time,
-      position: 'inBar',
-      shape: 'circle',
-      color: '#F59E0B',
-      text: 'Breakout',
-      size: 1,
-    });
-  }
-
-  return markers;
-}
-
-function buildCrossoverMarkers(candles, ma20Data, ma50Data) {
-  const markers = [];
-
-  for (let index = 1; index < candles.length; index += 1) {
-    const prevMa20 = ma20Data[index - 1]?.value;
-    const prevMa50 = ma50Data[index - 1]?.value;
-    const currentMa20 = ma20Data[index]?.value;
-    const currentMa50 = ma50Data[index]?.value;
-
-    if (
-      prevMa20 === null
-      || prevMa50 === null
-      || currentMa20 === null
-      || currentMa50 === null
-    ) {
-      continue;
-    }
-
-    if (prevMa20 <= prevMa50 && currentMa20 > currentMa50) {
-      markers.push({
-        time: candles[index].time,
-        position: 'belowBar',
-        shape: 'arrowUp',
-        color: '#60A5FA',
-        text: 'Bull Cross',
-        size: 1.5,
-      });
-      continue;
-    }
-
-    if (prevMa20 >= prevMa50 && currentMa20 < currentMa50) {
-      markers.push({
-        time: candles[index].time,
-        position: 'aboveBar',
-        shape: 'arrowDown',
-        color: '#F97316',
-        text: 'Bear Cross',
-        size: 1.5,
-      });
-    }
-  }
-
-  return markers;
-}
-
 function buildDecisionMarkers(candles, meta) {
   if (!candles.length || !meta) {
     return [];
@@ -261,12 +187,12 @@ function buildDecisionMarkers(candles, meta) {
     position: isBuy ? 'belowBar' : 'aboveBar',
     shape: isBuy ? 'arrowUp' : 'arrowDown',
     color: isBuy ? '#22C55E' : '#EF4444',
-    text: `${decision} ${confidence}%`,
+    text: decision,
     size: 2,
   }];
 }
 
-function CandlestickChart({ data, meta, height = 448 }) {
+function CandlestickChart({ data, meta, height = 448, showSignals = false }) {
   const containerRef = useRef(null);
   const initialHeightRef = useRef(height);
   const chartRef = useRef(null);
@@ -302,11 +228,10 @@ function CandlestickChart({ data, meta, height = 448 }) {
   const ma20Data = useMemo(() => buildMovingAverageSeries(candles, 20), [candles]);
   const ma50Data = useMemo(() => buildMovingAverageSeries(candles, 50), [candles]);
   const volumeData = useMemo(() => buildVolumeSeries(candles), [candles]);
-  const markerData = useMemo(() => ([
-    ...buildBreakoutMarkers(candles),
-    ...buildCrossoverMarkers(candles, ma20Data, ma50Data),
-    ...buildDecisionMarkers(candles, meta),
-  ]), [candles, ma20Data, ma50Data, meta]);
+  const markerData = useMemo(
+    () => (showSignals ? buildDecisionMarkers(candles, meta) : []),
+    [candles, meta, showSignals]
+  );
 
   const hasEnoughData = candles.length >= 2;
 
@@ -344,7 +269,9 @@ function CandlestickChart({ data, meta, height = 448 }) {
     setText(tooltipCloseRef, formatPrice(candle?.close));
     setText(tooltipVolumeRef, formatCompactNumber(candle?.volume));
 
-    if (decision && decision !== 'HOLD' && confidence !== null) {
+    if (!showSignals) {
+      setText(tooltipSignalRef, 'Signals hidden');
+    } else if (decision && decision !== 'HOLD' && confidence !== null) {
       const breakoutText = breakout ? ' | Breakout' : '';
       setText(tooltipSignalRef, `${decision} ${confidence}%${breakoutText}`);
     } else if (breakout) {

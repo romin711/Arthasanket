@@ -97,37 +97,38 @@ describe('OpportunityRadarPage', () => {
   test('filters latest alerts by action', () => {
     render(<OpportunityRadarPage />);
 
-    expect(screen.getByText(/TCS: HOLD/i)).toBeInTheDocument();
-    expect(screen.getByText(/ICICIBANK: BUY/i)).toBeInTheDocument();
+    expect(screen.getByText(/TCS signal explanation/i)).toBeInTheDocument();
+    expect(screen.getByText(/ICICI signal explanation/i)).toBeInTheDocument();
 
     const selects = screen.getAllByRole('combobox');
-    const actionSelect = selects[0];
+    const actionSelect = selects[1];
     fireEvent.change(actionSelect, { target: { value: 'BUY' } });
 
-    expect(screen.queryByText(/TCS: HOLD/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/ICICIBANK: BUY/i)).toBeInTheDocument();
+    expect(screen.queryByText(/TCS signal explanation/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/ICICI signal explanation/i)).toBeInTheDocument();
   });
 
   test('filters latest alerts by credibility tier', () => {
     render(<OpportunityRadarPage />);
 
     const selects = screen.getAllByRole('combobox');
-    const tierSelect = selects[2];
+    const tierSelect = selects[3];
     fireEvent.change(tierSelect, { target: { value: 'REGULATORY' } });
 
-    expect(screen.queryByText(/TCS: HOLD/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/ICICIBANK: BUY/i)).toBeInTheDocument();
+    expect(screen.queryByText(/TCS signal explanation/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/ICICI signal explanation/i)).toBeInTheDocument();
   });
 
   test('sorts history by highest average priority', () => {
     render(<OpportunityRadarPage />);
 
     const selects = screen.getAllByRole('combobox');
-    const historySortSelect = selects[4];
+    const historySortSelect = selects[5];
     fireEvent.change(historySortSelect, { target: { value: 'highest-priority' } });
 
     const summaryRows = screen.getAllByText(/Avg Priority:/i);
     expect(summaryRows.length).toBeGreaterThan(1);
     expect(summaryRows[0]).toHaveTextContent('Avg Priority: 80.00');
   });
+
 });

@@ -134,7 +134,7 @@ function PortfolioPage() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
         <Card className="space-y-4 p-6 xl:col-span-5" interactive={false}>
           <h2 className="text-lg font-semibold">1) Upload JSON</h2>
-          <p className="text-sm text-gray-500 dark:text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Upload a `.json` file with symbols and weights for faster portfolio input.
           </p>
 
@@ -142,17 +142,17 @@ function PortfolioPage() {
             type="file"
             accept=".json,application/json"
             onChange={handleJsonUpload}
-            className="w-full rounded-xl border border-slate-200 bg-white p-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+            className="w-full rounded-xl border border-slate-300 bg-white p-2 text-sm dark:border-slate-600 dark:bg-slate-900"
           />
 
-          <div className="rounded-2xl bg-slate-50 p-3 text-sm text-gray-500 dark:bg-slate-800 dark:text-slate-300">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300">
             <p>Supported JSON:</p>
             <pre className="mt-2 overflow-x-auto text-xs">[{`\n`}  {`{"symbol":"RELIANCE","weight":40},`}{`\n`}  {`{"symbol":"TCS","weight":30}`}{`\n`}]</pre>
             <p className="mt-2 text-xs">Alternative shape: {`{"portfolio": [...]}`}</p>
           </div>
 
           {localJsonMessage ? (
-            <p className="text-sm text-[#2563EB] dark:text-blue-300">{localJsonMessage}</p>
+            <p className="text-sm text-[#0F766E] dark:text-emerald-300">{localJsonMessage}</p>
           ) : null}
         </Card>
 
@@ -162,39 +162,39 @@ function PortfolioPage() {
             <button
               type="button"
               onClick={handleAddRow}
-              className="ripple-btn rounded-xl bg-[#1D4ED8] px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-xl"
+              className="ripple-btn rounded-xl bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-lg"
             >
               Add Row
             </button>
           </div>
 
-          <p className="mb-4 text-sm text-gray-500 dark:text-slate-400">
+          <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
             Enter ticker and weight. Example: `RELIANCE, 40`.
           </p>
 
           <div className="space-y-3">
             {rows.map((row, index) => (
-              <div key={`row-${index}`} className="grid grid-cols-1 gap-3 rounded-2xl bg-slate-50 p-3 md:grid-cols-12 dark:bg-slate-800">
+              <div key={`row-${index}`} className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 md:grid-cols-12 dark:border-slate-700 dark:bg-slate-900/70">
                 <div className="md:col-span-5">
-                  <label className="mb-1 block text-sm text-gray-500 dark:text-slate-400">Symbol</label>
+                  <label className="mb-1 block text-sm text-slate-600 dark:text-slate-300">Symbol</label>
                   <input
                     type="text"
                     value={row.symbol}
                     onChange={(event) => handleRowChange(index, 'symbol', event.target.value.toUpperCase())}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-all duration-200 ease-in-out focus:border-[#1D4ED8] dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-all duration-200 ease-in-out focus:border-[#0F766E] dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                     placeholder="RELIANCE"
                   />
                 </div>
 
                 <div className="md:col-span-5">
-                  <label className="mb-1 block text-sm text-gray-500 dark:text-slate-400">Weight</label>
+                  <label className="mb-1 block text-sm text-slate-600 dark:text-slate-300">Weight</label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={row.weight}
                     onChange={(event) => handleRowChange(index, 'weight', event.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-all duration-200 ease-in-out focus:border-[#1D4ED8] dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-all duration-200 ease-in-out focus:border-[#0F766E] dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                     placeholder="40"
                   />
                 </div>
@@ -203,7 +203,7 @@ function PortfolioPage() {
                   <button
                     type="button"
                     onClick={() => handleRemoveRow(index)}
-                    className="ripple-btn w-full rounded-xl bg-red-100 px-3 py-2 text-sm font-semibold text-red-700 transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-xl dark:bg-red-900/40 dark:text-red-300"
+                    className="ripple-btn w-full rounded-xl bg-rose-100 px-3 py-2 text-sm font-semibold text-rose-700 transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-lg dark:bg-rose-900/40 dark:text-rose-300"
                   >
                     Remove
                   </button>
@@ -217,7 +217,7 @@ function PortfolioPage() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
         <Card className="space-y-4 p-6 xl:col-span-5" interactive={false}>
           <h2 className="text-lg font-semibold">Behavioral Risk Check</h2>
-          <p className="text-sm text-gray-500 dark:text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Psychology-oriented checks before running live analysis.
           </p>
 
@@ -240,7 +240,7 @@ function PortfolioPage() {
 
         <Card className="space-y-4 p-6 xl:col-span-7" interactive={false}>
           <h2 className="text-lg font-semibold">Run Live Analysis</h2>
-          <p className="text-sm text-gray-500 dark:text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Pull current and historical market data, compute MA20, MA50, RSI(14), then generate decision and confidence.
           </p>
 
@@ -248,13 +248,13 @@ function PortfolioPage() {
             type="button"
             onClick={handleAnalyze}
             disabled={isAnalyzing}
-            className="ripple-btn w-full rounded-xl bg-[#16A34A] px-4 py-3 text-sm font-semibold text-white shadow-md transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-xl disabled:opacity-70"
+            className="ripple-btn w-full rounded-xl bg-[#0F766E] px-4 py-3 text-sm font-semibold text-white shadow-md transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-70"
           >
             {isAnalyzing ? 'Analyzing Live Market Data...' : 'Analyze Portfolio and Open Dashboard'}
           </button>
 
           {statusMessage ? (
-            <p className="text-sm text-[#16A34A]">{statusMessage}</p>
+            <p className="text-sm text-[#0F766E]">{statusMessage}</p>
           ) : null}
           {apiError ? (
             <p className="text-sm text-[#DC2626]">{apiError}</p>
@@ -269,13 +269,13 @@ function PortfolioPage() {
             type="button"
             onClick={handleRealtimeRefresh}
             disabled={isRefreshingQuotes}
-            className="ripple-btn rounded-xl bg-[#EA580C] px-3 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-xl disabled:opacity-70"
+            className="ripple-btn rounded-xl bg-[#C2410C] px-3 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-70"
           >
             {isRefreshingQuotes ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
 
-        <p className="text-sm text-gray-500 dark:text-slate-400">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
           Last update: {lastQuoteTimestamp ? new Date(lastQuoteTimestamp).toLocaleString() : 'Not fetched yet'}
         </p>
 
@@ -284,15 +284,15 @@ function PortfolioPage() {
             const quote = realtimeQuotes[symbol];
             const currencySymbol = getCurrencySymbol(symbol);
             return (
-              <div key={symbol} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800">
+              <div key={symbol} className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/70">
                 <span className="font-semibold text-slate-900 dark:text-slate-100">{symbol}</span>
-                <span className="text-gray-500 dark:text-slate-400">
+                <span className="text-slate-600 dark:text-slate-300">
                   {typeof quote?.price === 'number' ? `${currencySymbol}${quote.price.toFixed(2)}` : 'No quote'}
                 </span>
               </div>
             );
           }) : (
-            <p className="text-sm text-gray-500 dark:text-slate-400">Add symbols in manual section or upload JSON to fetch quotes.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">Add symbols in manual section or upload JSON to fetch quotes.</p>
           )}
         </div>
       </Card>

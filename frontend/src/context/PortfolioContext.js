@@ -230,7 +230,7 @@ export function PortfolioProvider({ children }) {
     }
   }, [analysisData, portfolioRows]);
 
-  const runOpportunityRadar = useCallback(async (rowsOverride = null) => {
+  const runOpportunityRadar = useCallback(async (rowsOverride = null, runOptions = {}) => {
     setIsRunningOpportunityRadar(true);
     setApiError('');
 
@@ -247,7 +247,12 @@ export function PortfolioProvider({ children }) {
         throw new Error('Please add at least one valid symbol and weight before running AI scan.');
       }
 
-      const payload = rows.map((row) => ({ symbol: row.symbol, weight: row.weight }));
+      const payload = {
+        portfolio: rows.map((row) => ({ symbol: row.symbol, weight: row.weight })),
+        preferences: {
+          riskProfile: String(runOptions?.riskProfile || 'moderate').toLowerCase(),
+        },
+      };
       const data = await requestWithHostFallback('POST', '/api/agent/opportunity-radar', payload);
 
       setOpportunityRadarData(data || null);

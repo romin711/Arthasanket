@@ -34,17 +34,17 @@ function SettingsPage() {
     <div className="space-y-6">
       <Card className="p-6" interactive={false}>
         <h2 className="text-lg font-semibold">Decision Psychology Preferences</h2>
-        <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
           Tune guardrails that help reduce impulsive and overconfident trading decisions.
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800">
-            <label className="mb-2 block text-sm text-gray-500 dark:text-slate-400">Risk Profile</label>
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/70">
+            <label className="mb-2 block text-sm text-slate-600 dark:text-slate-300">Risk Profile</label>
             <select
               value={settings.riskProfile}
               onChange={(event) => setSettings((prev) => ({ ...prev, riskProfile: event.target.value }))}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0F766E] dark:border-slate-600 dark:bg-slate-900"
             >
               <option value="conservative">Conservative</option>
               <option value="moderate">Moderate</option>
@@ -52,8 +52,8 @@ function SettingsPage() {
             </select>
           </div>
 
-          <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800">
-            <label className="mb-2 block text-sm text-gray-500 dark:text-slate-400">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/70">
+            <label className="mb-2 block text-sm text-slate-600 dark:text-slate-300">
               Max Single Position: {settings.maxPositionSize}%
             </label>
             <input
@@ -73,7 +73,7 @@ function SettingsPage() {
         <h3 className="text-lg font-semibold">Execution Controls</h3>
         <div className="mt-4 space-y-3">
           <label className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800">
-            <span className="text-sm text-gray-500 dark:text-slate-400">Enable reflection pause before acting on AI signal</span>
+            <span className="text-sm text-slate-600 dark:text-slate-300">Enable reflection pause before acting on AI signal</span>
             <input
               type="checkbox"
               checked={settings.reflectionPauseEnabled}
@@ -82,7 +82,7 @@ function SettingsPage() {
           </label>
 
           <label className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800">
-            <span className="text-sm text-gray-500 dark:text-slate-400">Auto-refresh realtime quotes when dashboard is active</span>
+            <span className="text-sm text-slate-600 dark:text-slate-300">Auto-refresh realtime quotes when dashboard is active</span>
             <input
               type="checkbox"
               checked={settings.autoRefreshEnabled}

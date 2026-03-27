@@ -11,6 +11,15 @@ jest.mock('axios', () => ({
 }));
 
 test('renders dashboard heading', () => {
+  window.history.pushState({}, '', '/');
   render(<App />);
   expect(screen.getByText(/ai investor dashboard/i)).toBeInTheDocument();
+});
+
+test('renders opportunity radar route content', async () => {
+  window.history.pushState({}, '', '/opportunity-radar');
+  render(<App />);
+  expect(
+    await screen.findByText(/autonomous workflow with saved daily runs and source-cited alerts/i)
+  ).toBeInTheDocument();
 });

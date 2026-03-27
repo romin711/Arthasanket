@@ -48,6 +48,10 @@ function parseYahooChart(payload, symbol) {
         || high === null
         || low === null
         || close === null
+        || open <= 0
+        || high <= 0
+        || low <= 0
+        || close <= 0
       ) {
         return null;
       }
@@ -79,7 +83,7 @@ function parseYahooChart(payload, symbol) {
 }
 
 async function fetchYahooStockData(symbol) {
-  const url = `${YAHOO_CHART_BASE}/${encodeURIComponent(symbol)}?range=3mo&interval=1d&includePrePost=false&events=div%2Csplit`;
+  const url = `${YAHOO_CHART_BASE}/${encodeURIComponent(symbol)}?range=1y&interval=1d&includePrePost=false&events=div%2Csplit`;
   const response = await fetch(url);
   const text = await response.text();
 

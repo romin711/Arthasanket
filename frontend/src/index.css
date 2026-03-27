@@ -1,28 +1,50 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --app-bg: #f2f6f5;
+    --app-surface: #ffffff;
+    --app-text: #14202a;
+    --app-muted: #4a5a67;
+    --app-accent: #0f766e;
+    --app-accent-2: #ea580c;
+  }
+
   * {
     box-sizing: border-box;
   }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    letter-spacing: -0.01em;
+  }
+
   body {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Manrope', system-ui, sans-serif;
     margin: 0;
     padding: 0;
-    background: #f8fafc;
-    color: #0f172a;
+    background: var(--app-bg);
+    color: var(--app-text);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 200ms ease-in-out, color 200ms ease-in-out;
   }
+
   .dark body {
-    background: #0f172a;
-    color: #e2e8f0;
+    background: #0b1418;
+    color: #d9e4ea;
   }
+
   #root {
     min-height: 100vh;
   }
@@ -54,5 +76,19 @@
 
   .ripple-btn:active {
     transform: scale(0.98);
+  }
+
+  .app-atmosphere {
+    background-image:
+      radial-gradient(circle at 10% -10%, rgba(15, 118, 110, 0.2), transparent 42%),
+      radial-gradient(circle at 85% 5%, rgba(234, 88, 12, 0.16), transparent 34%),
+      linear-gradient(160deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.35));
+  }
+
+  .dark .app-atmosphere {
+    background-image:
+      radial-gradient(circle at 10% -10%, rgba(13, 148, 136, 0.2), transparent 45%),
+      radial-gradient(circle at 85% 0%, rgba(249, 115, 22, 0.14), transparent 38%),
+      linear-gradient(160deg, rgba(11, 20, 24, 0.65), rgba(11, 20, 24, 0.55));
   }
 }

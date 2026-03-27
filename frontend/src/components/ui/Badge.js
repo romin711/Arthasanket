@@ -1,9 +1,9 @@
 import React from 'react';
 
 const toneStyles = {
-  BUY: 'bg-[#DCFCE7] text-[#166534] dark:bg-[#14532D] dark:text-[#86EFAC]',
-  HOLD: 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#78350F] dark:text-[#FCD34D]',
-  SELL: 'bg-[#FEE2E2] text-[#991B1B] dark:bg-[#7F1D1D] dark:text-[#FCA5A5]',
+  BUY: 'border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/35 dark:text-emerald-200',
+  HOLD: 'border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/35 dark:text-amber-200',
+  SELL: 'border border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-900/35 dark:text-rose-200',
 };
 
 function Badge({ action = 'HOLD' }) {

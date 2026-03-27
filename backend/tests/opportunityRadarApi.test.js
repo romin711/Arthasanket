@@ -146,6 +146,9 @@ async function run() {
         { symbol: 'TCS', weight: 40 },
         { symbol: 'RELIANCE', weight: 35 },
       ],
+      preferences: {
+        riskProfile: 'aggressive',
+      },
     };
 
     const radarResponse = await requestJson('POST', '/api/agent/opportunity-radar', radarPayload);
@@ -153,11 +156,58 @@ async function run() {
     assert.strictEqual(Array.isArray(radarResponse.body?.alerts), true, 'Radar response should include alerts array');
     assert.strictEqual(typeof radarResponse.body?.portfolioInsight, 'string', 'Radar response should include portfolioInsight');
     assert.strictEqual(radarResponse.body?.workflow?.length, 3, 'Radar workflow should include 3 steps');
+    assert.strictEqual(radarResponse.body?.riskProfile, 'aggressive', 'Radar response should echo selected risk profile');
+    assert.strictEqual(typeof radarResponse.body?.alphaEvidence, 'object', 'Radar response should include alphaEvidence');
+    assert.strictEqual(
+      Number.isInteger(radarResponse.body?.alphaEvidence?.totalSignals),
+      true,
+      'Alpha evidence should include integer totalSignals'
+    );
+    assert.strictEqual(
+      Array.isArray(radarResponse.body?.alphaEvidence?.signalTypeStats),
+      true,
+      'Alpha evidence should include signalTypeStats array'
+    );
 
     if (radarResponse.body.alerts.length > 0) {
       const first = radarResponse.body.alerts[0];
       assert.strictEqual(Number.isFinite(Number(first.priorityScore)), true, 'Alert should include numeric priorityScore');
       assert.strictEqual(Array.isArray(first.contextSignals), true, 'Alert should include contextSignals array');
+      assert.strictEqual(
+        Number.isInteger(first.backtestBreakoutSamples),
+        true,
+        'Alert should include integer backtestBreakoutSamples'
+      );
+      assert.strictEqual(
+        Number.isInteger(first.backtestLookback),
+        true,
+        'Alert should include integer backtestLookback'
+      );
+      assert.strictEqual(
+        Number.isInteger(first.backtestHorizon),
+        true,
+        'Alert should include integer backtestHorizon'
+      );
+      assert.strictEqual(
+        typeof first.executionPlan,
+        'object',
+        'Alert should include executionPlan object'
+      );
+      assert.strictEqual(
+        Number.isFinite(Number(first.executionPlan?.suggestedPositionSizePct)),
+        true,
+        'Execution plan should include numeric suggestedPositionSizePct'
+      );
+      assert.strictEqual(
+        Number.isInteger(first.executionPlan?.timeHorizonDays),
+        true,
+        'Execution plan should include integer timeHorizonDays'
+      );
+      assert.strictEqual(
+        first.executionPlan?.riskProfile,
+        'aggressive',
+        'Execution plan should include selected risk profile'
+      );
 
       if (first.contextSignals.length > 0) {
         const signal = first.contextSignals[0];
@@ -207,6 +257,23 @@ async function run() {
       wrongPayloadResponse.body?.error,
       'Portfolio payload must be array rows or rawInput text.',
       'Wrong payload type should return payload validation error'
+    );
+
+    const portfolioAnalyzeInvalidPayloadResponse = await requestRaw(
+      'POST',
+      '/api/portfolio/analyze',
+      '',
+      { 'Content-Type': 'application/json' }
+    );
+    assert.strictEqual(
+      portfolioAnalyzeInvalidPayloadResponse.statusCode,
+      400,
+      'Portfolio analyze endpoint should reject empty JSON body with HTTP 400'
+    );
+    assert.strictEqual(
+      portfolioAnalyzeInvalidPayloadResponse.body?.error,
+      'Portfolio payload must be array rows or rawInput text.',
+      'Portfolio analyze endpoint should return payload validation error'
     );
 
     const unknownRouteResponse = await requestJson('GET', '/api/agent/opportunity-radar/nope');

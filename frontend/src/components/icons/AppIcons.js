@@ -97,3 +97,25 @@ export function ArrowTrendIcon() {
     </svg>
   );
 }
+
+export function CheckCircleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={base} stroke="currentColor" strokeWidth="1.75">
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8 12 3 3 5-6" />
+    </svg>
+  );
+}
+
+export function ChartIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={base} stroke="currentColor" strokeWidth="1.75">
+      <path d="M3 6h18" />
+      <path d="M3 18h18" />
+      <rect x="3" y="6" width="18" height="12" rx="2" />
+      <path d="M7 12h2v4" />
+      <path d="M12 10h2v6" />
+      <path d="M17 8h2v8" />
+    </svg>
+  );
+}

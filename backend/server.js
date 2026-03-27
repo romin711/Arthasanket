@@ -4,6 +4,26 @@ const path = require('path');
 const { URL } = require('url');
 const { analyzeSingleSymbol, analyzePortfolio, normalizePortfolioRows } = require('./engine/pipeline');
 const { runOpportunityRadar, getOpportunityRadarHistory } = require('./engine/opportunityAgent');
+const { getValidationMetrics, getStrategyPerformance } = require('./engine/performanceService');
+const { synchronizeSignalOutcomes } = require('./engine/signalOutcomeService');
+const { getMarketSummary, fetchFinancialNews } = require('./engine/marketIntelService');
+const {
+  getFinancialHealthScore,
+  getFinancialEvents,
+  getFinancialEventsEnhanced,
+  fetchNSEInsiderData,
+  fetchNewsData,
+  aggregateFinancialSignals,
+} = require('./engine/financialDataService');
+const { analyzeFinancialSignal, updateAlertLifecycle } = require('./engine/financialAnalyzer');
+
+function interpretHealthScore(score) {
+  if (score < -1) return 'Significant financial headwinds; multiple negative indicators';
+  if (score < 0) return 'Mixed signals with slight negative bias; monitor closely';
+  if (score < 0.5) return 'Neutral financial positioning; no clear directional bias';
+  if (score < 1.5) return 'Positively positioned with supportive fundamentals';
+  return 'Strong financial momentum with convergent bullish indicators';
+}
 
 function loadEnvFile(fileName) {
   const envPath = path.join(__dirname, fileName);
@@ -170,8 +190,12 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && pathname === '/api/agent/opportunity-radar') {
       const payload = await readJsonBody(req);
       const rows = normalizePortfolioRows(rowsFromPayload(payload));
+      const requestedRiskProfile = String(
+        payload?.preferences?.riskProfile || payload?.riskProfile || 'moderate'
+      ).toLowerCase();
       const result = await runOpportunityRadar(rows, {
         geminiApiKey: GEMINI_API_KEY,
+        riskProfile: requestedRiskProfile,
       });
       sendJson(res, 200, result);
       return;
@@ -184,6 +208,183 @@ const server = http.createServer(async (req, res) => {
         items,
         count: items.length,
       });
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/validation/performance') {
+      const alerts = [];
+      const history = getOpportunityRadarHistory(100);
+      history.forEach((run) => {
+        if (Array.isArray(run.alerts)) {
+          alerts.push(...run.alerts);
+        }
+      });
+
+      const liveOutcomes = await synchronizeSignalOutcomes(history);
+      const metrics = getValidationMetrics(alerts, liveOutcomes);
+      sendJson(res, 200, metrics);
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/validation/strategy-breakdown') {
+      const history = getOpportunityRadarHistory(100);
+      const liveOutcomes = await synchronizeSignalOutcomes(history);
+      const breakdown = getStrategyPerformance(liveOutcomes);
+      sendJson(res, 200, breakdown);
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/validation/outcomes') {
+      const history = getOpportunityRadarHistory(100);
+      const outcomes = await synchronizeSignalOutcomes(history);
+      sendJson(res, 200, {
+        items: outcomes,
+        count: outcomes.length,
+      });
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/market/summary') {
+      const history = getOpportunityRadarHistory(100);
+      const summary = await getMarketSummary(history);
+      sendJson(res, 200, summary);
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/news/financial') {
+      const limit = Number(url.searchParams.get('limit') || 5);
+      const items = await fetchFinancialNews(limit);
+      sendJson(res, 200, {
+        items,
+        count: items.length,
+      });
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/financial/health') {
+      const symbol = url.searchParams.get('symbol');
+      if (!symbol) {
+        sendJson(res, 400, { error: 'Missing symbol parameter' });
+        return;
+      }
+      try {
+        const events = await getFinancialEventsEnhanced(symbol);
+        const credibilityWeights = {
+          REGULATORY: 1.0,
+          OFFICIAL: 0.85,
+          NEWS: 0.6,
+          COMMUNITY: 0.3,
+        };
+
+        let totalWeightedScore = 0;
+        let totalWeight = 0;
+
+        events.forEach((event) => {
+          const weight = credibilityWeights[event.credibility] || 0.5;
+          const decayedScore = event.impactScore * event.recencyDecayFactor;
+          totalWeightedScore += decayedScore * weight;
+          totalWeight += weight;
+        });
+
+        const healthScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+        const boundedHealthScore = Math.max(-3, Math.min(3, healthScore));
+        const aggregatedPatterns = aggregateFinancialSignals(events);
+        
+        sendJson(res, 200, {
+          symbol,
+          healthScore: boundedHealthScore,
+          interpretation: interpretHealthScore(boundedHealthScore),
+          recentEventCount: events.length,
+          topEvents: events.slice(0, 5),
+          aggregatedPatterns,
+          dataSource: 'Enhanced Real Data (NSE + News + Filings)',
+          generatedAt: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error(`[Health Score Error] ${symbol}:`, error.message);
+        sendJson(res, 500, { error: `Failed to calculate health score: ${error.message}` });
+      }
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/financial/events') {
+      const symbol = url.searchParams.get('symbol');
+      if (!symbol) {
+        sendJson(res, 400, { error: 'Missing symbol parameter' });
+        return;
+      }
+      try {
+        // Use enhanced version that includes real API data
+        const events = await getFinancialEventsEnhanced(symbol);
+        sendJson(res, 200, {
+          symbol,
+          events,
+          count: events.length,
+          dataSource: 'Enhanced Real Data (NSE + News + Filings)',
+          generatedAt: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error(`[Events Error] ${symbol}:`, error.message);
+        sendJson(res, 500, { error: `Failed to fetch events: ${error.message}` });
+      }
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/financial/signal') {
+      const symbol = url.searchParams.get('symbol');
+      const price = Number(url.searchParams.get('price') || 0);
+      if (!symbol || price <= 0) {
+        sendJson(res, 400, { error: 'Missing or invalid symbol/price parameters' });
+        return;
+      }
+      const signal = await analyzeFinancialSignal(symbol, price);
+      if (!signal) {
+        sendJson(res, 404, { error: `No financial data available for symbol ${symbol}` });
+        return;
+      }
+      sendJson(res, 200, signal);
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/financial/insider') {
+      const symbol = url.searchParams.get('symbol');
+      if (!symbol) {
+        sendJson(res, 400, { error: 'Missing symbol parameter' });
+        return;
+      }
+      try {
+        const insiderData = await fetchNSEInsiderData(symbol);
+        sendJson(res, 200, {
+          symbol,
+          ...insiderData,
+          dataSource: 'NSE Insider Portal (Real-Time)',
+        });
+      } catch (error) {
+        console.error(`[Insider Data Error] ${symbol}:`, error.message);
+        sendJson(res, 500, { error: `Failed to fetch insider data: ${error.message}` });
+      }
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/financial/news') {
+      const symbol = url.searchParams.get('symbol');
+      if (!symbol) {
+        sendJson(res, 400, { error: 'Missing symbol parameter' });
+        return;
+      }
+      try {
+        const newsApiKey = process.env.NEWSAPI_KEY;
+        const newsData = await fetchNewsData(symbol, newsApiKey);
+        sendJson(res, 200, {
+          symbol,
+          ...newsData,
+          dataSource: 'NewsAPI (Real-Time Headlines)',
+          newsApiEnabled: !!newsApiKey,
+        });
+      } catch (error) {
+        console.error(`[News Error] ${symbol}:`, error.message);
+        sendJson(res, 500, { error: `Failed to fetch news: ${error.message}` });
+      }
       return;
     }
 

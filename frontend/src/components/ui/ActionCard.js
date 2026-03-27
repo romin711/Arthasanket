@@ -1,0 +1,134 @@
+import React from 'react';
+import Badge from './Badge';
+
+/**
+ * ActionCard: Converts BUY/SELL/HOLD into executable trade plan
+ * Shows: entry, stop, target, position size, time horizon, risk/reward
+ */
+function ActionCard({ alert, tradePlan, portfolio }) {
+  const {
+    decision,          // BUY, SELL, HOLD
+    entryLow, entryHigh, // entry zone
+    stopLoss,
+    target1, target2,
+    timeHorizon,       // days
+    positionSize,      // % of portfolio
+    rationale,
+    watchOnly = false,
+    executable = true,
+  } = tradePlan || {};
+
+  const currentPrice = alert?.price || 0;
+  const hasValidPlan = entryLow && stopLoss && target1;
+
+  const calculateMetrics = () => {
+    if (!hasValidPlan || !currentPrice) return {};
+
+    const riskPercentage = Math.abs((currentPrice - stopLoss) / currentPrice) * 100;
+    const reward1 = Math.abs((target1 - currentPrice) / currentPrice) * 100;
+    const reward2 = Math.abs((target2 - currentPrice) / currentPrice) * 100;
+    const avgReward = (reward1 + reward2) / 2;
+    const riskRewardRatio = avgReward / riskPercentage;
+
+    return { riskPercentage, reward1, reward2, avgReward, riskRewardRatio };
+  };
+
+  const metrics = calculateMetrics();
+
+  if (!hasValidPlan) {
+    return (
+      <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/40">
+        <p className="text-xs text-slate-500">No executable plan available</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900/40">
+      {/* Header */}
+      <div className="mb-3 flex items-center justify-between">
+        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Action Plan</h4>
+        <Badge action={decision} />
+      </div>
+
+      {watchOnly || executable === false ? (
+        <p className="mb-3 text-xs text-amber-700 dark:text-amber-300">
+          Watch-only plan: levels are for confirmation, not immediate execution.
+        </p>
+      ) : null}
+
+      {/* Entry Zone */}
+      <div className="mb-4 grid grid-cols-2 gap-3">
+        <div className="rounded border border-slate-200 p-2 dark:border-slate-700">
+          <p className="text-xs text-slate-500 dark:text-slate-400">Entry Zone</p>
+          <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
+            ₹{entryLow?.toFixed(2)} - ₹{entryHigh?.toFixed(2)}
+          </p>
+          <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
+            {(((entryHigh - entryLow) / currentPrice) * 100).toFixed(2)}% range
+          </p>
+        </div>
+
+        <div className="rounded border border-rose-200 bg-rose-50 p-2 dark:border-rose-900/40 dark:bg-rose-900/20">
+          <p className="text-xs text-rose-600 dark:text-rose-400">Stop Loss</p>
+          <p className="mt-1 font-semibold text-rose-700 dark:text-rose-300">₹{stopLoss?.toFixed(2)}</p>
+          <p className="mt-0.5 text-xs text-rose-600 dark:text-rose-400">
+            Max loss: {metrics.riskPercentage?.toFixed(2)}%
+          </p>
+        </div>
+      </div>
+
+      {/* Targets */}
+      <div className="mb-4 grid grid-cols-2 gap-3">
+        <div className="rounded border border-emerald-200 bg-emerald-50 p-2 dark:border-emerald-900/40 dark:bg-emerald-900/20">
+          <p className="text-xs text-emerald-600 dark:text-emerald-400">Target 1</p>
+          <p className="mt-1 font-semibold text-emerald-700 dark:text-emerald-300">₹{target1?.toFixed(2)}</p>
+          <p className="mt-0.5 text-xs text-emerald-600 dark:text-emerald-400">
+            +{metrics.reward1?.toFixed(2)}% upside
+          </p>
+        </div>
+
+        <div className="rounded border border-emerald-200 bg-emerald-50 p-2 dark:border-emerald-900/40 dark:bg-emerald-900/20">
+          <p className="text-xs text-emerald-600 dark:text-emerald-400">Target 2</p>
+          <p className="mt-1 font-semibold text-emerald-700 dark:text-emerald-300">₹{target2?.toFixed(2)}</p>
+          <p className="mt-0.5 text-xs text-emerald-600 dark:text-emerald-400">
+            +{metrics.reward2?.toFixed(2)}% upside
+          </p>
+        </div>
+      </div>
+
+      {/* Key Metrics */}
+      <div className="mb-4 grid grid-cols-3 gap-3">
+        <div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Position Size</p>
+          <p className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">{(positionSize * 100).toFixed(1)}%</p>
+          <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">of portfolio</p>
+        </div>
+
+        <div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Risk/Reward</p>
+          <p className={`mt-1 text-lg font-bold ${metrics.riskRewardRatio > 1.5 ? 'text-emerald-600' : 'text-slate-900'} dark:text-slate-100`}>
+            1:{metrics.riskRewardRatio?.toFixed(2)}
+          </p>
+          <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">Ratio</p>
+        </div>
+
+        <div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Time Horizon</p>
+          <p className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">{timeHorizon} days</p>
+          <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">Hold period</p>
+        </div>
+      </div>
+
+      {/* Rationale */}
+      {rationale && (
+        <div className="rounded border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900/60">
+          <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Rationale</p>
+          <p className="mt-1 text-xs text-slate-700 dark:text-slate-300">{rationale}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default ActionCard;
